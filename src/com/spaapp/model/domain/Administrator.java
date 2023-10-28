@@ -15,7 +15,7 @@ public class Administrator {
     }
 
     public void removeService() {
-        // logic to remove a spa service
+        // remove a spa service
     }
 
     public void manageStaff() {
