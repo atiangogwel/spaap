@@ -14,4 +14,10 @@ public class SpaStaff {
     public String toString() {
         return "SpaStaff: " + staffName;
     }
+
+
+	public String getStaffName() {
+        return staffName;
+	}
+
 }

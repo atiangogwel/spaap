@@ -1,4 +1,5 @@
-package com.spaapp.model.domain;
+package com.spaapp.model.domain.test;
+import com.spaapp.model.domain.SpaService;
 import com.spaapp.model.services.spaservice.SpaServiceManager;
 
 import static org.junit.Assert.*;

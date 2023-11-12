@@ -3,11 +3,20 @@ package project;
 import com.spaapp.model.services.loginservice.ILoginService;
 import com.spaapp.model.services.factory.ServiceFactory;
 import com.spaapp.model.domain.Customer;
+import com.spaapp.model.services.spaservice.CustomerServiceImpl;
+import com.spaapp.model.services.spaservice.ICustomerService;
 import com.spaapp.model.services.spaservice.SpaServiceManager;
+import com.spaapp.model.services.spaservice.SpaStaffServiceImpl;
+import com.spaapp.model.domain.SpaStaff;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.io.IOException;
+import java.util.Properties;
 import java.util.Scanner;
+import java.io.FileInputStream; 
+import java.io.InputStream; 
+
 
 public class MainClass {
     // Initialize a logger for logging
@@ -16,6 +25,8 @@ public class MainClass {
     public static void main(String[] args) {
         // Initialize logging
         configureLogging();
+        // Load properties
+        loadProperties();
 
         try {
             // Initialization
@@ -46,7 +57,9 @@ public class MainClass {
                 System.out.println("1. Add a new spa service");
                 System.out.println("2. Update a spa service by ID");
                 System.out.println("3. Delete a spa service by ID");
-                System.out.println("4. Exit");
+                System.out.println("4. Manage Spa Staff");
+                System.out.println("5. Manage Customers");
+                System.out.println("6. Exit");
 
                 Scanner scanner = new Scanner(System.in);
                 String userInput = scanner.nextLine();
@@ -131,6 +144,14 @@ public class MainClass {
                         }
                         break;
                     case "4":
+                        // Call the method to manage spa staff
+                        manageSpaStaff();
+                        break;
+                    case "5":
+                        // Call the method to manage customers
+                        manageCustomers(new CustomerServiceImpl());
+                        break;
+                    case "6":
                         System.out.println("Goodbye!");
                         System.exit(0);
                         break;
@@ -143,11 +164,130 @@ public class MainClass {
             logger.log(Level.SEVERE, "An error occurred: " + e.getMessage(), e);
         }
     }
+    
+    //staff management service/CRUD operations
+    private static void manageSpaStaff() {
+        SpaStaffServiceImpl spaStaffService = new SpaStaffServiceImpl();
+
+        // Add spa staff
+        SpaStaff staff1 = new SpaStaff("John Doe", "Massage Therapist");
+        spaStaffService.addSpaStaff(staff1);
+        System.out.println("Spa Staff created: " + staff1);
+
+        // Read spa staff
+        SpaStaff readStaff = spaStaffService.getSpaStaff("John Doe");
+        if (readStaff != null) {
+            System.out.println("Read Spa Staff: " + readStaff);
+        }
+
+        // Update spa staff
+        SpaStaff updatedStaff = new SpaStaff("John Doe", "Senior Massage Therapist");
+        spaStaffService.updateSpaStaff("John Smith", updatedStaff);
+
+        // Read the updated spa staff
+        readStaff = spaStaffService.getSpaStaff("John Smith");
+        if (readStaff != null) {
+            System.out.println("Updated Spa Staff: " + readStaff);
+        }
+
+        // Delete spa staff
+        spaStaffService.deleteSpaStaff("John Smith");
+
+        // Try to read the deleted spa staff
+        readStaff = spaStaffService.getSpaStaff("John Smith");
+        if (readStaff == null) {
+            System.out.println("Spa Staff 'John Doe' has been deleted.");
+        }
+    }
+    
+    //customer management service/CRUD operations
+
+    private static void manageCustomers(ICustomerService customerService) {
+        // Add customer
+        Customer customer1 = new Customer("John Doe", "123 Main St", "123-456-7890", "john@example.com", "john_doe", "password123");
+        customerService.addCustomer(customer1);
+        System.out.println("Customer created: " + customer1);
+
+        // Read customer
+        Customer readCustomer = customerService.getCustomerByUsername("john_doe");
+        if (readCustomer != null) {
+            System.out.println("Read Customer: " + readCustomer);
+        }
+
+        // Update customer
+        Customer updatedCustomer = new Customer("John Doe", "456 Oak St", "987-654-3210", "john@example.com", "john_doe", "newpassword");
+        customerService.updateCustomer("john_doe", updatedCustomer);
+
+        // Read the updated customer
+        readCustomer = customerService.getCustomerByUsername("john_doe");
+        if (readCustomer != null) {
+            System.out.println("Updated Customer: " + readCustomer);
+        }
+
+        // Delete customer
+        customerService.deleteCustomer("john_doe");
+
+        // Try to read the deleted customer
+        readCustomer = customerService.getCustomerByUsername("john_doe");
+        if (readCustomer == null) {
+            System.out.println("Customer 'John Doe' has been deleted.");
+        }
+    }
 
     // Method to configure logging
     private static void configureLogging() {
-        // Set up logging configuration (e.g., log to a file or console)
-        // Here, we'll configure basic console logging
-        logger.setLevel(Level.INFO);
+        try (InputStream input = new FileInputStream("config/application.properties")) {
+            Properties properties = new Properties();
+            properties.load(input);
+
+            // Get the values of the service properties
+            String loginServiceImplClassName = properties.getProperty("login.service.impl");
+            String spaServiceManagerImplClassName = properties.getProperty("spaServiceManager.impl");
+            String spaStaffServiceImplClassName = properties.getProperty("spastaff.service.impl");
+            String customerServiceImplClassName = properties.getProperty("customer.service.impl");
+
+            // Initialize services
+            ILoginService loginService = (ILoginService) Class.forName(loginServiceImplClassName).newInstance();
+            SpaServiceManager spaServiceManager = (SpaServiceManager) Class.forName(spaServiceManagerImplClassName).newInstance();
+            SpaStaffServiceImpl spaStaffService = (SpaStaffServiceImpl) Class.forName(spaStaffServiceImplClassName).newInstance();
+            
+            // Set up customer service implementation
+            ICustomerService customerService = (ICustomerService) Class.forName(customerServiceImplClassName).newInstance();
+
+            logger.setLevel(Level.INFO);
+        } catch (IOException | ClassNotFoundException | IllegalAccessException | InstantiationException e) {
+            // Handle exceptions...
+            e.printStackTrace();
+        }
+    }
+
+
+
+    private static void loadProperties() {
+        try {
+            // Get the prop_location system property
+            String propLocation = System.getProperty("prop_location");
+
+            // Check if prop_location is specified
+            if (propLocation == null || propLocation.isEmpty()) {
+                System.out.println("Error: prop_location not specified. Exiting.");
+                System.exit(1);
+            }
+
+            // Load properties from the specified location
+            Properties properties = new Properties();
+            try (InputStream input = new FileInputStream(propLocation)) {
+                properties.load(input);
+            }
+
+            // Access the properties as needed
+            String spaServiceImplementation = properties.getProperty("spa.service.implementation");
+            System.out.println("Spa Service Implementation: " + spaServiceImplementation);
+
+        } catch (IOException e) {
+            // Handle exceptions related to property loading
+            logger.log(Level.SEVERE, "Error loading properties: " + e.getMessage(), e);
+            System.exit(1);
+        }
     }
 }

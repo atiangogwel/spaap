@@ -1,6 +1,7 @@
 package com.spaapp.model.services.loginservice;
 
 import com.spaapp.model.domain.Customer;
+import com.spaapp.model.services.spaservice.exception.LoginServiceException;
 
 public class LoginServiceImpl implements ILoginService {
     /**
@@ -9,10 +10,11 @@ public class LoginServiceImpl implements ILoginService {
     public boolean authenticateCustomer(String username, String password) {
         //authentication logic here
         System.out.println("Entering method LoginServiceImpl::authenticateCustomer");
-        if (username.equals("user1") && password.equals("pass123")) {
+
+        if ("user1".equals(username) && "pass123".equals(password)) {
             return true;
+        } else {
+            throw new LoginServiceException("Authentication failed for user: " + username);
         }
-        
-        return false;
     }
 }

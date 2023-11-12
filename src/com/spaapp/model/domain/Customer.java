@@ -1,4 +1,5 @@
 package com.spaapp.model.domain;
+import java.util.Objects;
 
 public class Customer {
     private String legalName;
@@ -19,11 +20,11 @@ public class Customer {
 
 
     public void bookAppointment() {
-        // Implement booking logic
+        // booking logic
     }
 
     public void updateProfile() {
-        // Implement profile update logic
+        // profile update logic
     }
 
 
@@ -31,4 +32,27 @@ public class Customer {
     public String toString() {
         return "Customer: " + legalName + " (" + username + ")";
     }
+
+
+	public String getUsername() {
+		// TODO Auto-generated method stub
+		return username;
+	}
+	@Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        Customer customer = (Customer) obj;
+        return Objects.equals(username, customer.username);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(username);
+    }
+	
 }

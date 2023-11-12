@@ -1,6 +1,8 @@
 package com.spaapp.model.services.spaservice;
+
 import com.spaapp.model.domain.SpaService;
-import java.io.*;
+import com.spaapp.model.services.spaservice.exception.SpaServiceException;
+
 import java.util.ArrayList;
 import java.util.List;
 
