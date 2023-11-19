@@ -1,9 +1,9 @@
-Week4
-Main method 
-![Screenshot from 2023-11-12 04-36-32](https://github.com/atiangogwel/spaap/assets/128331774/28b18d5c-b4d6-4fa3-960d-bef50140ce2b)
+Week 5 Tests
+Test 1: Business Service Load Exception 
+![Screenshot from 2023-11-19 20-19-34](https://github.com/atiangogwel/spaap/assets/128331774/fd844f2e-c2a5-4c97-845a-5237d6e960f9)
+Test 2 for Business Service Load Exception/Property file not found 
+![Screenshot from 2023-11-19 20-18-23](https://github.com/atiangogwel/spaap/assets/128331774/ff928baa-0d40-4941-b42f-39ff5ddd4471)
+Test 3: Running the application with the driver class
+![Screenshot from 2023-11-19 20-04-28](https://github.com/atiangogwel/spaap/assets/128331774/cc29d05f-6ce3-4535-95cc-dec1f37e74c2)
 
-Customer service test 
-![Screenshot from 2023-11-12 04-37-33](https://github.com/atiangogwel/spaap/assets/128331774/f702b6ab-0833-48f9-9680-aa24c2b28bda)
 
-Spa staff service test 
-![Screenshot from 2023-11-12 04-37-58](https://github.com/atiangogwel/spaap/assets/128331774/50b23153-a2f0-4648-8c63-935cae3b17f3)
