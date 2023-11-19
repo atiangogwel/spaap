@@ -3,7 +3,10 @@ package project;
 import com.spaapp.model.services.loginservice.ILoginService;
 import com.spaapp.model.services.factory.ServiceFactory;
 import com.spaapp.model.domain.Customer;
-import com.spaapp.model.services.spaservice.SpaServiceManager;
+import com.spaapp.model.services.spaservice.ISpaService;
+import com.spaapp.model.services.spaservice.SpaServiceImpl;
+import com.spaapp.model.services.spaservice.SpaServiceImpl;
+import com.spaapp.model.services.spaservice.ISpaService;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -32,7 +35,7 @@ public class MainClass {
             }
 
             // Create and manage spa services
-            SpaServiceManager spaServiceManager = new SpaServiceManager();
+            ISpaService spaServiceManager = new SpaServiceImpl();
 
             // Display a heading for available spa services
             System.out.println("Available Spa Services:");

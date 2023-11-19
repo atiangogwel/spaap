@@ -1,26 +1,27 @@
 package com.spaapp.model.services.spaservice;
+
 import com.spaapp.model.domain.SpaService;
-import java.io.*;
+
 import java.util.ArrayList;
 import java.util.List;
 
-public class SpaServiceManager {
+public class SpaServiceImpl implements ISpaService {
     private List<SpaService> spaServices;
     private int nextServiceId;
 
-    public SpaServiceManager() {
+    public SpaServiceImpl() {
         spaServices = new ArrayList<>();
         nextServiceId = 1;
     }
 
-    // Create a new spa service
+    @Override
     public void createSpaService(String serviceName, String description, double price) {
         SpaService newService = new SpaService(nextServiceId, serviceName, description, price);
         spaServices.add(newService);
         nextServiceId++;
     }
 
-    // Read a spa service by ID
+    @Override
     public SpaService readSpaService(int serviceId) {
         for (SpaService service : spaServices) {
             if (service.getServiceId() == serviceId) {
@@ -30,7 +31,7 @@ public class SpaServiceManager {
         return null; // Service not found
     }
 
-    // Update a spa service by ID
+    @Override
     public boolean updateSpaService(int serviceId, String newDescription, double newPrice) {
         SpaService service = readSpaService(serviceId);
         if (service != null) {
@@ -41,7 +42,7 @@ public class SpaServiceManager {
         return false; // Service not found
     }
 
-    // Delete a spa service by ID
+    @Override
     public boolean deleteSpaService(int serviceId) {
         SpaService service = readSpaService(serviceId);
         if (service != null) {
@@ -51,7 +52,7 @@ public class SpaServiceManager {
         return false; // Service not found
     }
 
-    // List all available spa services
+    @Override
     public void listAllSpaServices() {
         for (SpaService service : spaServices) {
             System.out.println(service);
