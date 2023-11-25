@@ -1,44 +1,58 @@
 package com.spaapp.model.domain;
+
 import java.util.Objects;
 
 public class Customer {
     private String legalName;
-    private String homeAddress;
+    private String address;
     private String phoneNumber;
     private String email;
     private String username;
     private String password;
+    private String customer_id;
 
-    public Customer(String legalName, String homeAddress, String phoneNumber, String email, String username, String password) {
-        this.legalName = legalName;
-        this.homeAddress = homeAddress;
+    public Customer(String username, String address, String phoneNumber, String email, String legalName) {
+        this.username = username;
+        this.address = address;
         this.phoneNumber = phoneNumber;
         this.email = email;
-        this.username = username;
-        this.password = password;
+        this.legalName = legalName;
     }
 
-
     public void bookAppointment() {
-        // booking logic
+        // Booking logic
     }
 
     public void updateProfile() {
-        // profile update logic
+        // Profile update logic
     }
-
 
     @Override
     public String toString() {
         return "Customer: " + legalName + " (" + username + ")";
     }
 
+    public String getUsername() {
+        return username;
+    }
 
-	public String getUsername() {
-		// TODO Auto-generated method stub
-		return username;
-	}
-	@Override
+    public String getAddress() {
+        return address;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public String getLegalName() {
+        return legalName;
+    }
+
+    @Override
     public boolean equals(Object obj) {
         if (this == obj) {
             return true;
@@ -54,5 +68,14 @@ public class Customer {
     public int hashCode() {
         return Objects.hash(username);
     }
-	
+
+    public int getCustomerId() {
+        // Convert the customer_id String to an int
+        try {
+            return Integer.parseInt(customer_id);
+        } catch (NumberFormatException e) {
+
+            return 0;
+        }
+    }
 }

@@ -1,47 +1,102 @@
 package com.spaapp.model.services.spaservice;
-import com.spaapp.model.services.spaservice.exception.CustomerServiceException;
 
+import com.spaapp.model.services.spaservice.exception.CustomerServiceException;
+import com.spaapp.persistence.DatabaseInitializer;
 import com.spaapp.model.domain.Customer;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 public class CustomerServiceImpl implements ICustomerService {
 
-    private Map<String, Customer> customers;
+    @Override
+    public List<Customer> getAllCustomers() {
+        List<Customer> allCustomers = new ArrayList<>();
 
-    public CustomerServiceImpl() {
-        this.customers = new HashMap<>();
+        final String jdbcUrl = DatabaseInitializer.getJdbcUrl();
+
+        try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
+            String query = "SELECT * FROM customers";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    while (resultSet.next()) {
+                        String username = resultSet.getString("username");
+                        String address = resultSet.getString("address");
+                        String phoneNumber = resultSet.getString("phoneNumber");
+                        String email = resultSet.getString("email");
+                        String legalName = resultSet.getString("legalName");
+
+                        Customer customer = new Customer(username, address, phoneNumber, email, legalName);
+                        allCustomers.add(customer);
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            // Handle database connection or query errors
+            e.printStackTrace();
+        }
+
+        return allCustomers;
     }
 
     @Override
     public void addCustomer(Customer customer) {
-        if (customers.containsKey(customer.getUsername())) {
-            throw new CustomerServiceException("Customer with username " + customer.getUsername() + " already exists.");
+        final String jdbcUrl = DatabaseInitializer.getJdbcUrl();
+
+        try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
+            String query = "INSERT INTO customers (username, address, phoneNumber, email, legalName) VALUES (?, ?, ?, ?, ?)";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                preparedStatement.setString(1, customer.getUsername());
+                preparedStatement.setString(2, customer.getAddress());
+                preparedStatement.setString(3, customer.getPhoneNumber());
+                preparedStatement.setString(4, customer.getEmail());
+                preparedStatement.setString(5, customer.getLegalName());
+
+                preparedStatement.executeUpdate();
+            }
+        } catch (SQLException e) {
+            // Handle database connection or query errors
+            e.printStackTrace();
         }
-        customers.put(customer.getUsername(), customer);
     }
 
     @Override
-    public Customer getCustomerByUsername(String username) {
-        return customers.get(username);
-    }
+    public void updateCustomer(int customerId, Customer updatedCustomer) {
+        final String jdbcUrl = DatabaseInitializer.getJdbcUrl();
 
-    @Override
-    public void updateCustomer(String username, Customer updatedCustomer) {
-        if (customers.containsKey(username)) {
-            customers.put(username, updatedCustomer);
-        } else {
-            throw new CustomerServiceException("Customer not found with username: " + username);
+        try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
+            String query = "UPDATE customers SET address = ?, phoneNumber = ?, email = ?, legalName = ? WHERE customer_id = ?";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                preparedStatement.setString(1, updatedCustomer.getAddress());
+                preparedStatement.setString(2, updatedCustomer.getPhoneNumber());
+                preparedStatement.setString(3, updatedCustomer.getEmail());
+                preparedStatement.setString(4, updatedCustomer.getLegalName());
+                preparedStatement.setInt(5, customerId);
+
+                preparedStatement.executeUpdate();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
     @Override
-    public void deleteCustomer(String username) {
-        if (customers.containsKey(username)) {
-            customers.remove(username);
-        } else {
-            throw new CustomerServiceException("Customer not found with username: " + username);
+    public void deleteCustomer(int customerId) {
+        final String jdbcUrl = DatabaseInitializer.getJdbcUrl();
+
+        try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
+            String query = "DELETE FROM customers WHERE customer_id = ?";
+            try (PreparedStatement preparedStatement = connection.prepareStatement(query)) {
+                preparedStatement.setInt(1, customerId);
+                preparedStatement.executeUpdate();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 }

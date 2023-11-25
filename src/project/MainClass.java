@@ -3,28 +3,38 @@ package project;
 import com.spaapp.model.services.factory.ServiceFactory;
 import com.spaapp.model.business.manager.SpaServiceManager;
 import com.spaapp.model.domain.Customer;
+import com.spaapp.model.domain.SpaService;
 import com.spaapp.model.services.spaservice.CustomerServiceImpl;
 import com.spaapp.model.services.spaservice.ICustomerService;
 import com.spaapp.model.services.spaservice.ILoginService;
 import com.spaapp.model.services.spaservice.ISpaService;
+import com.spaapp.model.services.spaservice.LoginServiceImpl.AuthResult;
 import com.spaapp.model.services.spaservice.SpaServiceImpl;
 import com.spaapp.model.services.spaservice.SpaStaffServiceImpl;
 import com.spaapp.model.domain.SpaStaff;
+import com.spaapp.persistence.DatabaseInitializer;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.io.IOException;
+import java.util.List;
 import java.util.Properties;
 import java.util.Scanner;
 import java.io.FileInputStream; 
-import java.io.InputStream; 
+import java.io.InputStream;
+import java.lang.reflect.Constructor; 
+import java.lang.reflect.InvocationTargetException;
+import java.util.List;
+
 
 
 public class MainClass {
     // Initialize a logger for logging
     private static final Logger logger = Logger.getLogger(MainClass.class.getName());
-
+    private static SpaServiceManager spaServiceManager;
+    
     public static void main(String[] args) {
+    	DatabaseInitializer.initializeDatabase();
         // Initialize logging
         configureLogging();
         // Load properties
@@ -34,139 +44,196 @@ public class MainClass {
             // Initialization
             ServiceFactory serviceFactory = new ServiceFactory();
             ILoginService loginService = serviceFactory.createLoginService();
+            spaServiceManager = new SpaServiceManager();
 
-            // Application logic
-            boolean isAuthenticated = loginService.authenticateCustomer("user1", "pass123");
+            // Prompt the user for username and password
+            Scanner scanner = new Scanner(System.in);
+            System.out.print("Enter your username: ");
+            String username = scanner.nextLine();
+            System.out.print("Enter your password: ");
+            String password = scanner.nextLine();
 
-            if (isAuthenticated) {
+            AuthResult authResult = loginService.authenticateCustomer(username, password);
+
+
+            if (authResult.isAuthenticated()) {
                 System.out.println("Authentication successful");
+                // Check if the authenticated user is an admin
+                if ("administrator".equalsIgnoreCase(authResult.getRole())) {
+                    // Admin-specific logic here
+                    System.out.println("Welcome, Admin!");
+                    spaServiceManager = new SpaServiceManager(); 
+                    while (true) {
+                        // Display the entire menu for the administrator
+                        displayMenu(scanner);
+                }} else {
+                    // Regular user logic here
+                    System.out.println("Welcome, User!");
+                    
+                    while (true) {
+                        // Display a limited menu for regular users
+                        displayLimitedMenu(scanner);
+                    }
+                }         
+
             } else {
-                System.out.println("Authentication failed");
-            }
-
-            // Create and manage spa services
-            ISpaService spaServiceManager = new SpaServiceImpl();
-
-            // Display a heading for available spa services
-            System.out.println("Available Spa Services:");
-
-            while (true) {
-                // List all available spa services
-                spaServiceManager.listAllSpaServices();
-
-                // Prompt the user for options
-                System.out.println("Select an option:");
-                System.out.println("1. Add a new spa service");
-                System.out.println("2. Update a spa service by ID");
-                System.out.println("3. Delete a spa service by ID");
-                System.out.println("4. Manage Spa Staff");
-                System.out.println("5. Manage Customers");
-                System.out.println("6. Exit");
-
-                Scanner scanner = new Scanner(System.in);
-                String userInput = scanner.nextLine();
-
-                switch (userInput) {
-                    case "1":
-                        // Ask the user for service details
-                        System.out.print("Enter service name: ");
-                        String serviceName = scanner.nextLine();
-                        System.out.print("Enter service description: ");
-                        String description = scanner.nextLine();
-                        
-                        double price = 0;
-                        boolean validPrice = false;
-                        
-                        while (!validPrice) {
-                            System.out.print("Enter service price: ");
-                            String priceInput = scanner.nextLine();
-                            
-                            try {
-                                price = Double.parseDouble(priceInput);
-                                validPrice = true;
-                            } catch (NumberFormatException e) {
-                                System.out.println("Invalid price format. Please enter a valid number.");
-                            }
-                        }
-
-                        // Create the new spa service
-                        spaServiceManager.createSpaService(serviceName, description, price);
-                        System.out.println("New spa service added successfully!");
-                        break;
-                    case "2":
-                        // Ask the user for the service ID to update
-                        System.out.print("Enter the ID of the service to update: ");
-                        int serviceIdToUpdate = Integer.parseInt(scanner.nextLine());
-
-                        // Check if the service exists
-                        if (spaServiceManager.readSpaService(serviceIdToUpdate) != null) {
-                            System.out.print("Enter new description: ");
-                            String newDescription = scanner.nextLine();
-                            
-                            double newPrice = 0;
-                            boolean validNewPrice = false;
-
-                            while (!validNewPrice) {
-                                System.out.print("Enter new price: ");
-                                String newPriceInput = scanner.nextLine();
-
-                                try {
-                                    newPrice = Double.parseDouble(newPriceInput);
-                                    validNewPrice = true;
-                                } catch (NumberFormatException e) {
-                                    System.out.println("Invalid price format. Please enter a valid number.");
-                                }
-                            }
-
-                            // Update the spa service
-                            if (spaServiceManager.updateSpaService(serviceIdToUpdate, newDescription, newPrice)) {
-                                System.out.println("Service updated successfully!");
-                            } else {
-                                System.out.println("Service not found.");
-                            }
-                        } else {
-                            System.out.println("Service not found.");
-                        }
-                        break;
-                    case "3":
-                        // Ask the user for the service ID to delete
-                        System.out.print("Enter the ID of the service to delete: ");
-                        int serviceIdToDelete = Integer.parseInt(scanner.nextLine());
-
-                        // Check if the service exists
-                        if (spaServiceManager.readSpaService(serviceIdToDelete) != null) {
-                            // Delete the spa service
-                            if (spaServiceManager.deleteSpaService(serviceIdToDelete)) {
-                                System.out.println("Service deleted successfully!");
-                            } else {
-                                System.out.println("Service not found.");
-                            }
-                        } else {
-                            System.out.println("Service not found.");
-                        }
-                        break;
-                    case "4":
-                        // Call the method to manage spa staff
-                        manageSpaStaff();
-                        break;
-                    case "5":
-                        // Call the method to manage customers
-                        manageCustomers(new CustomerServiceImpl());
-                        break;
-                    case "6":
-                        System.out.println("Goodbye!");
-                        System.exit(0);
-                        break;
-                    default:
-                        System.out.println("Invalid option. Please select a valid option.");
-                }
+            	 System.out.println("Authentication failed. Exiting.");                
             }
         } catch (Exception e) {
             // Handle unexpected exceptions
             logger.log(Level.SEVERE, "An error occurred: " + e.getMessage(), e);
         }
     }
-    
+    //main menu
+    private static void displayMenu(Scanner scanner) {
+    	
+        System.out.println("Select an option:");
+        System.out.println("1. Add a new spa service");
+        System.out.println("2. Update a spa service by ID");
+        System.out.println("3. Delete a spa service by ID");
+        System.out.println("4. View/List spa services available");
+        System.out.println("5. Manage Spa Staff");
+        System.out.println("6. Manage Customers");
+        System.out.println("7. Exit");
+
+        String userInput = scanner.nextLine();
+
+        switch (userInput) {
+            case "1":
+                // Add a new spa service logic
+                if (spaServiceManager == null) {
+                    System.out.println("Error: SpaServiceManager is not initialized.");
+                    break;
+                }
+                System.out.print("Enter service name: ");
+                String serviceName = scanner.nextLine();
+                System.out.print("Enter service description: ");
+                String description = scanner.nextLine();
+
+                double price = 0;
+                boolean validPrice = false;
+
+                while (!validPrice) {
+                    System.out.print("Enter service price: ");
+                    String priceInput = scanner.nextLine();
+
+                    try {
+                        price = Double.parseDouble(priceInput);
+                        validPrice = true;
+                    } catch (NumberFormatException e) {
+                        System.out.println("Invalid price format. Please enter a valid number.");
+                    }
+                }
+
+                // Call the createSpaService method to add a new spa service
+                spaServiceManager.createSpaService(serviceName, description, price);
+                System.out.println("New spa service added successfully!");
+                break;
+            case "2":
+                // Update a spa service logic
+            	updateSpaService(scanner, spaServiceManager);
+                break;
+            case "3":
+            	deleteSpaService(scanner, spaServiceManager);
+                break;
+            case "4":
+                // View/List spa services available logic
+                spaServiceManager.listAllSpaServices();
+                break;
+            case "5":
+                // Manage Spa Staff logic
+                break;
+            case "6":
+            	manageCustomers(scanner);
+                break;
+            case "7":
+                System.out.println("Goodbye!");
+                System.exit(0);
+                break;
+            default:
+                System.out.println("Invalid option. Please select a valid option.");
+        }
+    	
+    }
+    private static void updateSpaService(Scanner scanner, ISpaService spaServiceManager) {
+    	spaServiceManager.listAllSpaServices();
+    	// Ask the user for the service ID to update
+        System.out.print("Enter the ID of the service to update: ");
+        int serviceIdToUpdate = Integer.parseInt(scanner.nextLine());
+
+        // Check if the service exists
+        SpaService existingService = spaServiceManager.readSpaService(serviceIdToUpdate);
+        if (existingService != null) {
+            // Ask the user for the new description and price
+            System.out.print("Enter new description: ");
+            String newDescription = scanner.nextLine();
+
+            double newPrice = 0;
+            boolean validNewPrice = false;
+
+            while (!validNewPrice) {
+                System.out.print("Enter new price: ");
+                String newPriceInput = scanner.nextLine();
+
+                try {
+                    newPrice = Double.parseDouble(newPriceInput);
+                    validNewPrice = true;
+                } catch (NumberFormatException e) {
+                    System.out.println("Invalid price format. Please enter a valid number.");
+                }
+            }
+
+            // Update the spa service
+            if (spaServiceManager.updateSpaService(serviceIdToUpdate, newDescription, newPrice)) {
+                System.out.println("Service updated successfully!");
+            } else {
+                System.out.println("Failed to update service.");
+            }
+        } else {
+            System.out.println("Service not found. Please make sure to enter a valid service ID.");
+        }
+    }
+    private static void deleteSpaService(Scanner scanner, ISpaService spaServiceManager) {
+    	spaServiceManager.listAllSpaServices();
+    	// Ask the user for the ID of the spa service to delete
+        System.out.print("Enter the ID of the spa service to delete: ");
+        int serviceIdToDelete = scanner.nextInt();
+        scanner.nextLine(); // Consume the newline character
+
+        // Call the deleteSpaService method to delete the spa service
+        boolean isDeleted = spaServiceManager.deleteSpaService(serviceIdToDelete);
+
+        if (isDeleted) {
+            System.out.println("");
+        } else {
+            System.out.println("Failed to delete spa service. Service not found.");
+        }
+    }
+
+	private static void displayLimitedMenu(Scanner scanner) {
+        // Display a limited menu for regular users
+        System.out.println("Select an option:");
+        System.out.println("1. View available spa services");
+        System.out.println("2. Update personal information");
+        System.out.println("3. Exit");
+
+        String userInput = scanner.nextLine();
+
+        switch (userInput) {
+            case "1":
+            	 spaServiceManager.listAllSpaServices();
+                break;
+            case "2":
+                // Update personal information logic
+                break;
+            case "3":
+                System.out.println("Goodbye!");
+                System.exit(0);
+                break;
+            default:
+                System.out.println("Invalid option. Please select a valid option.");
+        }
+    }
     //staff management service/CRUD operations
     private static void manageSpaStaff() {
         SpaStaffServiceImpl spaStaffService = new SpaStaffServiceImpl();
@@ -204,41 +271,148 @@ public class MainClass {
     
     //customer management service/CRUD operations
 
-    private static void manageCustomers(ICustomerService customerService) {
-        // Add customer
-        Customer customer1 = new Customer("John Doe", "123 Main St", "123-456-7890", "john@example.com", "john_doe", "password123");
-        customerService.addCustomer(customer1);
-        System.out.println("Customer created: " + customer1);
+    private static void manageCustomers(Scanner scanner)  {
+    	ICustomerService customerService = new CustomerServiceImpl();
+    	boolean exit = false;
+    	
+        System.out.println("Select an option:");
+        System.out.println("1. View all customers");
+        System.out.println("2. Add new customer information");
+        System.out.println("3. Update customer information");
+        System.out.println("4. Delete customer");
+        System.out.println("5. Exit");
 
-        // Read customer
-        Customer readCustomer = customerService.getCustomerByUsername("john_doe");
-        if (readCustomer != null) {
-            System.out.println("Read Customer: " + readCustomer);
-        }
+        String userInput = scanner.nextLine();
 
-        // Update customer
-        Customer updatedCustomer = new Customer("John Doe", "456 Oak St", "987-654-3210", "john@example.com", "john_doe", "newpassword");
-        customerService.updateCustomer("john_doe", updatedCustomer);
+        switch (userInput) {
+            case "1":
+                // View all customers logic
+            	   List<Customer> allCustomers = customerService.getAllCustomers();
+            	    System.out.println("All Customers:");
+            	    System.out.printf("%-5s | %-20s | %-50s | %-15s | %-30s | %-20s%n",
+            	            "ID", "Username", "Address", "Phone Number", "Email", "Legal Name");
+            	    System.out.println("--------------------------------------------------------------------------------------");
 
-        // Read the updated customer
-        readCustomer = customerService.getCustomerByUsername("john_doe");
-        if (readCustomer != null) {
-            System.out.println("Updated Customer: " + readCustomer);
-        }
+            	    for (Customer customer : allCustomers) {
+            	        System.out.printf("%-5d | %-20s | %-50s | %-15s | %-30s | %-20s%n",
+            	                customer.getCustomerId(), customer.getUsername(), customer.getAddress(),
+            	                customer.getPhoneNumber(), customer.getEmail(), customer.getLegalName());
+            	    }
 
-        // Delete customer
-        customerService.deleteCustomer("john_doe");
+                break;
+            case "2":
+            	addNewCustomer(customerService, scanner);
+                break;
+            case "3":
+         	   List<Customer> allCustomersForDisplay1 = customerService.getAllCustomers();
 
-        // Try to read the deleted customer
-        readCustomer = customerService.getCustomerByUsername("john_doe");
-        if (readCustomer == null) {
-            System.out.println("Customer 'John Doe' has been deleted.");
+       	    // Display the customers in tabular format
+               System.out.println("Available Customers:");
+               System.out.printf("%-5s | %-20s | %-50s | %-15s | %-30s | %-20s%n",
+                       "ID", "Username", "Address", "Phone Number", "Email", "Legal Name");
+               System.out.println("-------------------------------------------------------------------------------------------------------------------");
+
+               for (Customer customer : allCustomersForDisplay1) {
+                   System.out.printf("%-5d | %-20s | %-50s | %-15s | %-30s | %-20s%n",
+                           customer.getCustomerId(), customer.getUsername(), customer.getAddress(),
+                           customer.getPhoneNumber(), customer.getEmail(), customer.getLegalName());
+               }
+            	System.out.print("Enter the customer ID to update: ");
+                int customerIdToUpdate = scanner.nextInt();
+                scanner.nextLine(); // Consume the newline character
+
+                // Prompt the user for the updated customer information
+                System.out.print("Enter new address: ");
+                String newAddress = scanner.nextLine();
+
+                System.out.print("Enter new phone number: ");
+                String newPhoneNumber = scanner.nextLine();
+
+                System.out.print("Enter new email: ");
+                String newEmail = scanner.nextLine();
+
+                System.out.print("Enter new legal name: ");
+                String newLegalName = scanner.nextLine();
+
+                // Create a Customer object with the updated information
+                Customer updatedCustomer = new Customer(null, newAddress, newPhoneNumber, newEmail, newLegalName);
+
+                // Call the updateCustomer method
+                customerService.updateCustomer(customerIdToUpdate, updatedCustomer);
+
+                // Inform the user about the update
+                System.out.println("Customer information updated successfully!");
+                break;
+            case "4":
+                List<Customer> allCustomersForDisplay = customerService.getAllCustomers();
+
+                // Display the customers in tabular format
+                System.out.println("Available Customers:");
+                System.out.printf("%-5s | %-20s | %-50s | %-15s | %-30s | %-20s%n",
+                        "ID", "Username", "Address", "Phone Number", "Email", "Legal Name");
+                System.out.println("-------------------------------------------------------------------------------------------------------------------");
+
+                for (Customer customer : allCustomersForDisplay) {
+                    System.out.printf("%-5d | %-20s | %-50s | %-15s | %-30s | %-20s%n",
+                            customer.getCustomerId(), customer.getUsername(), customer.getAddress(),
+                            customer.getPhoneNumber(), customer.getEmail(), customer.getLegalName());
+                }
+            	Scanner scannerDelete = new Scanner(System.in);
+
+                // Prompt the user for the customer ID to delete
+                System.out.print("Enter the customer ID to delete: ");
+                int customerIdToDelete = scannerDelete.nextInt();
+                scannerDelete.nextLine(); // Consume the newline character
+
+                // Call the deleteCustomer method
+                customerService.deleteCustomer(customerIdToDelete);
+                System.out.println("Customer deleted successfully!");
+                break;
+            case "5":
+                System.out.println("Going back to Main Menu.");
+                exit = true;
+                break;
+            default:
+                System.out.println("Invalid option. Please select a valid option.");
+        }   
+    }
+    private static void addNewCustomer(ICustomerService customerService, Scanner scanner) {
+        System.out.println("Enter new customer details:");
+
+        System.out.print("Username: ");
+        String username = scanner.nextLine();
+
+        System.out.print("Address: ");
+        String address = scanner.nextLine();
+
+        System.out.print("Phone Number: ");
+        String phoneNumber = scanner.nextLine();
+
+        System.out.print("Email: ");
+        String email = scanner.nextLine();
+
+        System.out.print("Legal Name: ");
+        String legalName = scanner.nextLine();
+
+        Customer newCustomer = new Customer(username, address, phoneNumber, email, legalName);
+
+        try {
+            customerService.addCustomer(newCustomer);
+            System.out.println("New customer added successfully!");
+        } catch (Exception e) {
+            System.out.println("Failed to add customer. Error: " + e.getMessage());
         }
     }
 
+ // Generic method to create an instance of a class
+    private static <T> T createInstance(String className, Class<T> type) throws ClassNotFoundException, NoSuchMethodException, IllegalAccessException, InvocationTargetException, InstantiationException {
+        Class<?> clazz = Class.forName(className);
+        Constructor<?> constructor = clazz.getDeclaredConstructor();
+        return type.cast(constructor.newInstance());
+    }
     // Method to configure logging
     private static void configureLogging() {
-        try (InputStream input = new FileInputStream("config/application.properties")) {
+    	try (InputStream input = new FileInputStream("config/application.properties")) {
             Properties properties = new Properties();
             properties.load(input);
 
@@ -249,15 +423,15 @@ public class MainClass {
             String customerServiceImplClassName = properties.getProperty("customer.service.impl");
 
             // Initialize services
-            ILoginService loginService = (ILoginService) Class.forName(loginServiceImplClassName).newInstance();
-            SpaServiceManager spaServiceManager = (SpaServiceManager) Class.forName(spaServiceManagerImplClassName).newInstance();
-            SpaStaffServiceImpl spaStaffService = (SpaStaffServiceImpl) Class.forName(spaStaffServiceImplClassName).newInstance();
-            
+            ILoginService loginService = createInstance(loginServiceImplClassName, ILoginService.class);
+            SpaServiceManager spaServiceManager = createInstance(spaServiceManagerImplClassName, SpaServiceManager.class);
+            SpaStaffServiceImpl spaStaffService = createInstance(spaStaffServiceImplClassName, SpaStaffServiceImpl.class);
+
             // Set up customer service implementation
-            ICustomerService customerService = (ICustomerService) Class.forName(customerServiceImplClassName).newInstance();
+            ICustomerService customerService = createInstance(customerServiceImplClassName, ICustomerService.class);
 
             logger.setLevel(Level.INFO);
-        } catch (IOException | ClassNotFoundException | IllegalAccessException | InstantiationException e) {
+        } catch (IOException | InstantiationException | IllegalAccessException | ClassNotFoundException | NoSuchMethodException | InvocationTargetException e) {
             // Handle exceptions...
             e.printStackTrace();
         }

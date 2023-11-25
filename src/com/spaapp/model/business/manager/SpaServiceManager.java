@@ -7,6 +7,7 @@ import com.spaapp.model.services.spaservice.ICustomerService;
 import com.spaapp.model.services.spaservice.ILoginService;
 import com.spaapp.model.services.spaservice.ISpaStaffService;
 import com.spaapp.model.services.spaservice.LoginServiceImpl;
+import com.spaapp.model.services.spaservice.LoginServiceImpl.AuthResult;
 import com.spaapp.model.services.spaservice.SpaServiceImpl;
 import com.spaapp.model.business.exception.ServiceLoadException;
 import com.spaapp.model.domain.Customer;
@@ -25,19 +26,21 @@ import com.spaapp.model.services.spaservice.exception.SpaStaffServiceException;
 
 import java.util.List;
 
-public class SpaServiceManager {
+public class SpaServiceManager implements ISpaService {
 
     private ISpaService spaService;
     private ISpaStaffService spaStaffService;
     private ICustomerService customerService;
     private ILoginService loginService;
-
-    public SpaServiceManager(ISpaService spaService, ISpaStaffService spaStaffService, ICustomerService customerService, ILoginService loginService) {
-        this.spaService = spaService;
-        this.spaStaffService = spaStaffService;
-        this.customerService = customerService;
-        this.loginService = loginService;
+    // Default constructor
+    public SpaServiceManager() {
+        this.spaService = new SpaServiceImpl();
+        this.spaStaffService = new SpaStaffServiceImpl();
+        this.customerService = new CustomerServiceImpl();
+        this.loginService = new LoginServiceImpl();
     }
+
+
 
     // SpaService related methods
 
@@ -89,26 +92,24 @@ public class SpaServiceManager {
         }
     }
 
-    public Customer getCustomerByUsername(String username) {
-        return customerService.getCustomerByUsername(username);
-    }
 
-    public void updateCustomer(String username, Customer updatedCustomer) {
+
+    public void updateCustomer(int username, Customer updatedCustomer) {
         customerService.updateCustomer(username, updatedCustomer);
     }
 
-    public void deleteCustomer(String username) {
+    public void deleteCustomer(int username) {
         customerService.deleteCustomer(username);
     }
 
     // Login related method
 
-    public boolean authenticateCustomer(String username, String password) {
+    public AuthResult authenticateCustomer(String username, String password) {
         try {
             return loginService.authenticateCustomer(username, password);
         } catch (LoginServiceException e) {
             System.out.println(e.getMessage());
-            return false;
+            return new AuthResult(false, null);
         }
     }
 }
