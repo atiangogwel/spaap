@@ -8,9 +8,11 @@ import com.spaapp.model.services.spaservice.CustomerServiceImpl;
 import com.spaapp.model.services.spaservice.ICustomerService;
 import com.spaapp.model.services.spaservice.ILoginService;
 import com.spaapp.model.services.spaservice.ISpaService;
+import com.spaapp.model.services.spaservice.ISpaStaffService;
 import com.spaapp.model.services.spaservice.LoginServiceImpl.AuthResult;
 import com.spaapp.model.services.spaservice.SpaServiceImpl;
 import com.spaapp.model.services.spaservice.SpaStaffServiceImpl;
+import com.spaapp.model.services.spaservice.exception.SpaStaffServiceException;
 import com.spaapp.model.domain.SpaStaff;
 import com.spaapp.persistence.DatabaseInitializer;
 
@@ -59,7 +61,7 @@ public class MainClass {
             if (authResult.isAuthenticated()) {
                 System.out.println("Authentication successful");
                 // Check if the authenticated user is an admin
-                if ("administrator".equalsIgnoreCase(authResult.getRole())) {
+                if (authResult.getRole() != null && authResult.getRole() == 1) {
                     // Admin-specific logic here
                     System.out.println("Welcome, Admin!");
                     spaServiceManager = new SpaServiceManager(); 
@@ -84,7 +86,7 @@ public class MainClass {
             logger.log(Level.SEVERE, "An error occurred: " + e.getMessage(), e);
         }
     }
-    //main menu
+    //main menu//for admins 
     private static void displayMenu(Scanner scanner) {
     	
         System.out.println("Select an option:");
@@ -141,7 +143,7 @@ public class MainClass {
                 spaServiceManager.listAllSpaServices();
                 break;
             case "5":
-                // Manage Spa Staff logic
+            	manageSpaStaff(scanner);
                 break;
             case "6":
             	manageCustomers(scanner);
@@ -235,42 +237,106 @@ public class MainClass {
         }
     }
     //staff management service/CRUD operations
-    private static void manageSpaStaff() {
-        SpaStaffServiceImpl spaStaffService = new SpaStaffServiceImpl();
+	private static void manageSpaStaff(Scanner scanner) {
+        SpaStaffServiceImpl spaStaffService = new SpaStaffServiceImpl(); // Use the implemented SpaStaffService
 
-        // Add spa staff
-        SpaStaff staff1 = new SpaStaff("John Doe", "Massage Therapist");
-        spaStaffService.addSpaStaff(staff1);
-        System.out.println("Spa Staff created: " + staff1);
+        while (true) {
+            System.out.println("Select an option:");
+            System.out.println("1. Add Spa Staff");
+            System.out.println("2. Update Spa Staff");
+            System.out.println("3. Delete Spa Staff");
+            System.out.println("4. View/List Spa Staff");
+            System.out.println("5. Exit Spa Staff Management");
 
-        // Read spa staff
-        SpaStaff readStaff = spaStaffService.getSpaStaff("John Doe");
-        if (readStaff != null) {
-            System.out.println("Read Spa Staff: " + readStaff);
-        }
+            String userInput = scanner.nextLine();
 
-        // Update spa staff
-        SpaStaff updatedStaff = new SpaStaff("John Doe", "Senior Massage Therapist");
-        spaStaffService.updateSpaStaff("John Smith", updatedStaff);
+            switch (userInput) {
+                case "1":
+                    // Add Spa Staff logic
+                    System.out.print("Enter staff username: ");
+                    String username = scanner.nextLine();
+                    System.out.print("Enter staff password: ");
+                    String password = scanner.nextLine();
+                    System.out.print("Enter staff email: ");
+                    String email = scanner.nextLine();
+                    System.out.print("Enter staff full name: ");
+                    String fullName = scanner.nextLine();
 
-        // Read the updated spa staff
-        readStaff = spaStaffService.getSpaStaff("John Smith");
-        if (readStaff != null) {
-            System.out.println("Updated Spa Staff: " + readStaff);
-        }
-
-        // Delete spa staff
-        spaStaffService.deleteSpaStaff("John Smith");
-
-        // Try to read the deleted spa staff
-        readStaff = spaStaffService.getSpaStaff("John Smith");
-        if (readStaff == null) {
-            System.out.println("Spa Staff 'John Doe' has been deleted.");
+                    SpaStaff newSpaStaff = new SpaStaff(0, username, password, email, fullName);
+                    spaStaffService.addSpaStaff(newSpaStaff);
+                    System.out.println("Spa Staff added successfully!");
+                    break;
+                case "2":
+                    // load all staff
+                	viewAllSpaStaff(spaStaffService);
+                	updateSpaStaff(scanner, spaStaffService);
+                    break;
+                case "3":
+                	viewAllSpaStaff(spaStaffService);
+                	deleteSpaStaff(scanner,spaStaffService);
+      
+                    break;
+                case "4":
+                	viewAllSpaStaff(spaStaffService);
+                    break;
+                case "5":
+                    System.out.println("Exiting Spa Staff Management");
+                    return;
+                default:
+                    System.out.println("Invalid option. Please select a valid option.");
+            }
         }
     }
-    
-    //customer management service/CRUD operations
+	private static void viewAllSpaStaff(ISpaStaffService spaStaffService) {
+	    try {
+	        List<SpaStaff> spaStaffList = spaStaffService.getAllSpaStaff();
+	        for (SpaStaff spaStaff : spaStaffList) {
+	        }
+	    } catch (SpaStaffServiceException e) {
+	        System.out.println("Error retrieving spa staff: " + e.getMessage());
+	    }
+	}
+	 private static void updateSpaStaff(Scanner scanner, ISpaStaffService spaStaffService) {
+		 System.out.print("Enter staff ID to update: ");
+	        int staffId = scanner.nextInt();
+	        scanner.nextLine(); 
 
+	        System.out.print("Enter new username: ");
+	        String newUsername = scanner.nextLine();
+
+	        System.out.print("Enter new email: ");
+	        String newEmail = scanner.nextLine();
+
+	        System.out.print("Enter new password: ");
+	        String newPassword = scanner.nextLine();
+
+	        System.out.print("Enter new full name: ");
+	        String newFullName = scanner.nextLine();
+
+	        SpaStaff updatedStaff = new SpaStaff(staffId, newUsername, newPassword, newEmail, newFullName);
+
+	        try {
+	            spaStaffService.updateSpaStaff(staffId, updatedStaff);
+	            System.out.println("Spa Staff updated successfully!");
+	        } catch (SpaStaffServiceException e) {
+	            System.out.println("Error updating spa staff: " + e.getMessage());
+	        }
+	    }
+	    private static void deleteSpaStaff(Scanner scanner, ISpaStaffService spaStaffService) {
+	        System.out.print("Enter staff ID to delete: ");
+	        int staffId = scanner.nextInt();
+	        scanner.nextLine(); // Consume the newline character
+
+	        try {
+	            spaStaffService.deleteSpaStaff(staffId);
+	            System.out.println("Spa Staff deleted successfully!");
+	        } catch (SpaStaffServiceException e) {
+	            System.out.println("Error deleting spa staff: " + e.getMessage());
+	        }
+	    }
+
+
+    //customer management service/CRUD operations
     private static void manageCustomers(Scanner scanner)  {
     	ICustomerService customerService = new CustomerServiceImpl();
     	boolean exit = false;
